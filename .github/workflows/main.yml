@@ -23,7 +23,7 @@ jobs:
       # Publish
       - name: publish on version change UnionOf Common
         id: publish_nuget_unionof_common
-        uses: vicosanz/publish-nuget@v2.5.10
+        uses: vicosanz/publish-nuget@v2.5.11
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: UnionOf.Common/UnionOf.Common.csproj
@@ -41,7 +41,7 @@ jobs:
       # Publish
       - name: publish on version change UnionOf Generator
         id: publish_nuget_unionof_generator
-        uses: vicosanz/publish-nuget@v2.5.10
+        uses: vicosanz/publish-nuget@v2.5.11
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: UnionOf.Generator/UnionOf.Generator.csproj
@@ -59,7 +59,7 @@ jobs:
       # Publish
       - name: publish on version change UnionOf
         id: publish_nuget_unionof
-        uses: vicosanz/publish-nuget@v2.5.10
+        uses: vicosanz/publish-nuget@v2.5.11
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: UnionOf/UnionOf.csproj

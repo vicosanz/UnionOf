@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>netstandard2.0</TargetFramework>
+	  <LangVersion>Latest</LangVersion>
+	  <RootNamespace>UnionOf</RootNamespace>
+	  <Description>Implementation of Discriminated unions. Common library</Description>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageProjectUrl>https://github.com/vicosanz/UnionOf</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/vicosanz/UnionOf</RepositoryUrl>
+	  <Authors>Victor Sanchez</Authors>
+	  <Company>Infoware Soluciones</Company>
+	  <Version>1.0.0</Version>
+	  <PackageReleaseNotes>Implementation of Discriminated unions. Common library</PackageReleaseNotes>
+  </PropertyGroup>
+
+</Project>

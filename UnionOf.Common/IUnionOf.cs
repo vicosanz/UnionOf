@@ -2,6 +2,7 @@
 
 public interface IUnionOf
 {
+	public object Value { get; }
 }
 public interface IUnionOf<T0, T1> : IUnionOf
 {

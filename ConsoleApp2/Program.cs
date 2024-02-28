@@ -6,7 +6,7 @@ using UnionOf;
 Console.WriteLine("Hello, World!");
 
 
-Cat mycat = new Cat();
+Cat mycat = new();
 CatDog pet = new Dog();
 CatDog pet2 = mycat;
 CatDog pet3 = new Cat();
@@ -64,13 +64,16 @@ ResultOperation operation2 = ResultOperation.IsErr("Invalid name");
 ErrOr<bool> resultbool = ProcessData(false);
 ErrOr<bool> resulterr = ProcessData(true);
 
+Console.WriteLine($"resultbool fail: {resultbool.IsFail()}");
+Console.WriteLine($"resulterr fail: {resulterr.IsFail()}");
 if (resulterr.Value is Exception ex)
 {
     Console.WriteLine(ex.Message);
 }
 
 UnionOf<int, string> valorIntString = 9;
-ErrOr<bool> ProcessData(bool fail)
+
+static ErrOr<bool> ProcessData(bool fail)
 {
     if (fail) return new AccessViolationException();
     return true;
@@ -89,7 +92,7 @@ var fullname = persona.LastName
 Console.WriteLine(fullname);
 
 
-string empty = null;
+string? empty = "x";
 var whentest = Optional.Of(empty).WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
 Console.WriteLine(whentest);
 record Persona(string FirstName, Optional<string> LastName);

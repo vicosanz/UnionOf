@@ -1,11 +1,12 @@
 # UnionOf
-Wrap an exception to a type
+C# Implementation of Discriminated unions made easy.
 
-[![NuGet Badge](https://buildstats.info/nuget/UnionOf)](https://www.nuget.org/packages/UnionOf/)
+UnionOf [![NuGet Badge](https://buildstats.info/nuget/UnionOf)](https://www.nuget.org/packages/UnionOf/)
+
+UnionOf.Generator [![NuGet Badge](https://buildstats.info/nuget/UnionOf.Generator)](https://www.nuget.org/packages/UnionOf.Generator/)
 
 [![publish to nuget](https://github.com/vicosanz/UnionOf/actions/workflows/main.yml/badge.svg)](https://github.com/vicosanz/UnionOf/actions/workflows/main.yml)
 
-C# Implementation of Discriminated unions made easy.
 
 ## Buy me a coffee
 If you want to reward my effort, :coffee: https://www.paypal.com/paypalme/vicosanzdev?locale.x=es_XC
@@ -51,20 +52,20 @@ All unions are source generated, you must create a struct specifying types to jo
 You can add logic to generated UnionOfs
 
 ```csharp
-	[UnionOf]
+    [UnionOf]
     public readonly partial struct IntOrString : IUnionOf<int, string>
     {
-		// User logic
-		public int GetInt() => Value switch
-		{
-			int number => number,
-			string text => ParseString(text),
-			_ => throw new InvalidOperationException()
-		};
+        // User logic
+        public int GetInt() => Value switch
+        {
+            int number => number,
+            string text => ParseString(text),
+            _ => throw new InvalidOperationException()
+        };
 
-		private static int ParseString(string s) => int.TryParse(s, out int num) ? num : 0;
-		// End of User logic
-	}
+        private static int ParseString(string s) => int.TryParse(s, out int num) ? num : 0;
+        // End of User logic
+    }
     
 ```
 
@@ -73,10 +74,10 @@ You can use UnionOfs as Result type with signed types
 
 ```csharp
     //Predefined ErrOr type present in UnionOf dll, included here for illustration
-	[UnionOf]
-	public readonly partial struct ErrOr<T0> : IUnionOf<T0, Exception>, IErrOr
-	{
-	}
+    [UnionOf]
+    public readonly partial struct ErrOr<T0> : IUnionOf<T0, Exception>, IErrOr
+    {
+    }
     
     ErrOr<bool> resultbool = ProcessData(false);
     ErrOr<bool> resulterr = ProcessData(true);
@@ -117,14 +118,14 @@ You can include subtypes into struct as result types and specialized methods wit
     [UnionOf]
     public readonly partial struct ResultOperation : IUnionOf<ResultOperation.Ok, ResultOperation.Err>
     {
-		public record Ok { }
+        public record Ok { }
         public static ResultOperation IsOk() => Create(new Ok());
 
 
-		public record Err(string Message);
-		public static ResultOperation IsErr(string message) => Create(new Err(message));
+        public record Err(string Message);
+        public static ResultOperation IsErr(string message) => Create(new Err(message));
 
-	}
+    }
 
     ...
     ResultOperation operation;
@@ -141,9 +142,9 @@ You can include subtypes into struct as result types and specialized methods wit
 In order to discriminated values use c# match pattern
 
 ```csharp
-   	[UnionOf]
-	public readonly partial struct CatDog : IUnionOf<Cat, Dog>
-	{
+    [UnionOf]
+    public readonly partial struct CatDog : IUnionOf<Cat, Dog>
+    {
     }
 
     public class Cat

@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "UnionOf.sln",
+    "projects": [
+      "UnionOf.Common\\UnionOf.Common.csproj",
+      "UnionOf.Generator\\UnionOf.Generator.csproj",
+      "UnionOf\\UnionOf.csproj"
+    ]
+  }
+}

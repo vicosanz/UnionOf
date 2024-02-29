@@ -4,9 +4,8 @@ on:
     branches:
       - master # Default release branch
 jobs:
-  publish:
-    name: build, pack & publish
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
 
@@ -17,59 +16,12 @@ jobs:
 
       - name: Install dependencies
         run: dotnet restore
+
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ci.slnf --configuration Release
+  
+      - name: Pack
+        run: dotnet pack ci.slnf --configuration Release --no-build --no-restore --output .
 
-      # Publish
-      - name: publish on version change UnionOf Common
-        id: publish_nuget_unionof_common
-        uses: vicosanz/publish-nuget@v2.5.16
-        with:
-          # Filepath of the project to be packaged, relative to root of repository
-          PROJECT_FILE_PATH: UnionOf.Common/UnionOf.Common.csproj
-          
-          TAG_FORMAT: '*'
-
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-
-          # NuGet server uri hosting the packages, defaults to https://api.nuget.org
-          NUGET_SOURCE: https://api.nuget.org
-
-          # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-          INCLUDE_SYMBOLS: true
-
-      # Publish
-      - name: publish on version change UnionOf Generator
-        id: publish_nuget_unionof_generator
-        uses: vicosanz/publish-nuget@v2.5.16
-        with:
-          # Filepath of the project to be packaged, relative to root of repository
-          PROJECT_FILE_PATH: UnionOf.Generator/UnionOf.Generator.csproj
-          
-          TAG_FORMAT: '*'
-
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-
-          # NuGet server uri hosting the packages, defaults to https://api.nuget.org
-          NUGET_SOURCE: https://api.nuget.org
-
-          # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-          INCLUDE_SYMBOLS: true
-
-      # Publish
-      - name: publish on version change UnionOf
-        id: publish_nuget_unionof
-        uses: vicosanz/publish-nuget@v2.5.16
-        with:
-          # Filepath of the project to be packaged, relative to root of repository
-          PROJECT_FILE_PATH: UnionOf/UnionOf.csproj
-          
-          TAG_FORMAT: '*'
-
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-
-          # NuGet server uri hosting the packages, defaults to https://api.nuget.org
-          NUGET_SOURCE: https://api.nuget.org
-
-          # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
-          INCLUDE_SYMBOLS: true
+      - name: Push to Nuget
+        run: dotnet nuget push "*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json

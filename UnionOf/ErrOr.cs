@@ -18,52 +18,145 @@ namespace UnionOf
 	[UnionOf]
 	public readonly partial struct ErrOr<T0> : IUnionOf<T0, Exception>, IErrOr
 	{
+		/// <summary>
+		/// Get Inner type using a predicate
+		/// </summary>
+		/// <typeparam name="TResult"></typeparam>
+		/// <param name="mapT0">Predicate to map valid type</param>
+		/// <param name="mapError">Predicate to map Exception type</param>
+		/// <returns>Mapped object</returns>
+		/// <exception cref="InvalidCastException"></exception>
+		public TResult Match<TResult>(Func<T0, TResult> mapT0, Func<Exception, TResult> mapError) => Value switch
+		{
+			Exception error => mapError(error),
+			T0 valueT0 => mapT0(valueT0),
+			_ => throw new InvalidCastException()
+		};
 	}
 
 	/// <summary>
 	/// UnionOf valid types with an exception
 	/// </summary>
-	/// <typeparam name="T0"></typeparam>
-	/// <typeparam name="T1"></typeparam>
+	/// <typeparam name="T0">Type of valid value</typeparam>
+	/// <typeparam name="T1">Type of valid value</typeparam>
 	[UnionOf]
 	public readonly partial struct ErrOr<T0, T1> : IUnionOf<T0, T1, Exception>, IErrOr
 	{
+		/// <summary>
+		/// Get Inner type using a predicate
+		/// </summary>
+		/// <typeparam name="TResult"></typeparam>
+		/// <param name="mapT0">Predicate to map valid type</param>
+		/// <param name="mapT1">Predicate to map valid type</param>
+		/// <param name="mapError">Predicate to map Exception type</param>
+		/// <returns>Mapped object</returns>
+		/// <exception cref="InvalidCastException"></exception>
+		public TResult Match<TResult>(Func<T0, TResult> mapT0, Func<T1, TResult> mapT1, Func<Exception, TResult> mapError) => Value switch
+		{
+			Exception error => mapError(error),
+			T0 valueT0 => mapT0(valueT0),
+			T1 valueT1 => mapT1(valueT1),
+			_ => throw new InvalidCastException()
+		};
 	}
 
 	/// <summary>
 	/// UnionOf valid types with an exception
 	/// </summary>
-	/// <typeparam name="T0"></typeparam>
-	/// <typeparam name="T1"></typeparam>
-	/// <typeparam name="T2"></typeparam>
+	/// <typeparam name="T0">Type of valid value</typeparam>
+	/// <typeparam name="T1">Type of valid value</typeparam>
+	/// <typeparam name="T2">Type of valid value</typeparam>
 	[UnionOf]
 	public readonly partial struct ErrOr<T0, T1, T2> : IUnionOf<T0, T1, T2, Exception>, IErrOr
 	{
+		/// <summary>
+		/// Get Inner type using a predicate
+		/// </summary>
+		/// <typeparam name="TResult"></typeparam>
+		/// <param name="mapT0">Predicate to map valid type</param>
+		/// <param name="mapT1">Predicate to map valid type</param>
+		/// <param name="mapT2">Predicate to map valid type</param>
+		/// <param name="mapError">Predicate to map Exception type</param>
+		/// <returns>Mapped object</returns>
+		/// <exception cref="InvalidCastException"></exception>
+		public TResult Match<TResult>(Func<T0, TResult> mapT0, Func<T1, TResult> mapT1, Func<T2, TResult> mapT2,
+			Func<Exception, TResult> mapError) => Value switch
+			{
+				Exception error => mapError(error),
+				T0 valueT0 => mapT0(valueT0),
+				T1 valueT1 => mapT1(valueT1),
+				T2 valueT2 => mapT2(valueT2),
+				_ => throw new InvalidCastException()
+			};
 	}
 
 	/// <summary>
 	/// UnionOf valid types with an exception
 	/// </summary>
-	/// <typeparam name="T0"></typeparam>
-	/// <typeparam name="T1"></typeparam>
-	/// <typeparam name="T2"></typeparam>
-	/// <typeparam name="T3"></typeparam>
+	/// <typeparam name="T0">Type of valid value</typeparam>
+	/// <typeparam name="T1">Type of valid value</typeparam>
+	/// <typeparam name="T2">Type of valid value</typeparam>
+	/// <typeparam name="T3">Type of valid value</typeparam>
 	[UnionOf]
 	public readonly partial struct ErrOr<T0, T1, T2, T3> : IUnionOf<T0, T1, T2, T3, Exception>, IErrOr
 	{
+		/// <summary>
+		/// Get Inner type using a predicate
+		/// </summary>
+		/// <typeparam name="TResult"></typeparam>
+		/// <param name="mapT0">Predicate to map valid type</param>
+		/// <param name="mapT1">Predicate to map valid type</param>
+		/// <param name="mapT2">Predicate to map valid type</param>
+		/// <param name="mapT3">Predicate to map valid type</param>
+		/// <param name="mapError">Predicate to map Exception type</param>
+		/// <returns>Mapped object</returns>
+		/// <exception cref="InvalidCastException"></exception>
+		public TResult Match<TResult>(Func<T0, TResult> mapT0, Func<T1, TResult> mapT1, Func<T2, TResult> mapT2,
+			Func<T3, TResult> mapT3, Func<Exception, TResult> mapError) => Value switch
+			{
+				Exception error => mapError(error),
+				T0 valueT0 => mapT0(valueT0),
+				T1 valueT1 => mapT1(valueT1),
+				T2 valueT2 => mapT2(valueT2),
+				T3 valueT3 => mapT3(valueT3),
+				_ => throw new InvalidCastException()
+			};
 	}
 
 	/// <summary>
 	/// UnionOf valid types with an exception
 	/// </summary>
-	/// <typeparam name="T0"></typeparam>
-	/// <typeparam name="T1"></typeparam>
-	/// <typeparam name="T2"></typeparam>
-	/// <typeparam name="T3"></typeparam>
-	/// <typeparam name="T4"></typeparam>
+	/// <typeparam name="T0">Type of valid value</typeparam>
+	/// <typeparam name="T1">Type of valid value</typeparam>
+	/// <typeparam name="T2">Type of valid value</typeparam>
+	/// <typeparam name="T3">Type of valid value</typeparam>
+	/// <typeparam name="T4">Type of valid value</typeparam>
 	[UnionOf]
 	public readonly partial struct ErrOr<T0, T1, T2, T3, T4> : IUnionOf<T0, T1, T2, T3, T4, Exception>, IErrOr
 	{
+		/// <summary>
+		/// Get Inner type using a predicate
+		/// </summary>
+		/// <typeparam name="TResult"></typeparam>
+		/// <param name="mapT0">Predicate to map valid type</param>
+		/// <param name="mapT1">Predicate to map valid type</param>
+		/// <param name="mapT2">Predicate to map valid type</param>
+		/// <param name="mapT3">Predicate to map valid type</param>
+		/// <param name="mapT4">Predicate to map valid type</param>
+		/// <param name="mapError">Predicate to map Exception type</param>
+		/// <returns>Mapped object</returns>
+		/// <exception cref="InvalidCastException"></exception>
+		public TResult Match<TResult>(Func<T0, TResult> mapT0, Func<T1, TResult> mapT1, Func<T2, TResult> mapT2,
+			Func<T3, TResult> mapT3, Func<T4, TResult> mapT4, Func<Exception, TResult> mapError) => Value switch
+			{
+				Exception error => mapError(error),
+				T0 valueT0 => mapT0(valueT0),
+				T1 valueT1 => mapT1(valueT1),
+				T2 valueT2 => mapT2(valueT2),
+				T3 valueT3 => mapT3(valueT3),
+				T4 valueT4 => mapT4(valueT4),
+				_ => throw new InvalidCastException()
+			};
 	}
 
 	public static class ErrOr

@@ -71,6 +71,12 @@ if (resulterr.Value is Exception ex)
     Console.WriteLine(ex.Message);
 }
 
+if (resulterr.IsFail(out Exception exception)) Console.WriteLine(exception.Message);
+if (resulterr.IsFail()) Console.WriteLine(resulterr.Error);
+
+Console.WriteLine(resultbool.ValueT0);
+Console.WriteLine(resulterr.ValueT0.ToString());
+
 UnionOf<int, string> valorIntString = 9;
 
 static ErrOr<bool> ProcessData(bool fail)

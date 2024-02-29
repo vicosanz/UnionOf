@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace UnionOf
 {
@@ -16,7 +17,7 @@ namespace UnionOf
 	public readonly partial struct Optional<T0> : IUnionOf<T0, Empty>, IOptional
 	{
 		/// <summary>
-		/// Evaluate a predicate and returns this Optiomal object or new Optional empty
+		/// Evaluate a predicate and returns this Optional object or new Optional empty
 		/// </summary>
 		/// <param name="predicate">Predicate to evaluate</param>
 		/// <returns>if true return this object otherwise a new Optional empty</returns>
@@ -24,7 +25,7 @@ namespace UnionOf
 			Value is T0 value && predicate(value) ? this : new(Optional.Empty);
 
 		/// <summary>
-		/// Evaluate a negative predicate and returns this Optiomal object or new Optional empty
+		/// Evaluate a negative predicate and returns this Optional object or new Optional empty
 		/// </summary>
 		/// <param name="predicate">Negative predicate to evaluate</param>
 		/// <returns>if false return this object otherwise a new Optional empty</returns>
@@ -32,13 +33,22 @@ namespace UnionOf
 			Value is T0 value && !predicate(value) ? this : new(Optional.Empty);
 
 		/// <summary>
-		/// Create an Optional of different type based in this Optiomal object
+		/// Create an Optional of different type based in this Optional object
 		/// </summary>
 		/// <typeparam name="TResult">Type of a result Optional</typeparam>
 		/// <param name="map">Map predicate</param>
 		/// <returns>A new Optional of <see cref="TResult"/> after map execution</returns>
 		public Optional<TResult> Map<TResult>(Func<T0, TResult> map) =>
 			Value is T0 value ? Optional<TResult>.Create(map(value)) : Optional<TResult>.Create(Optional.Empty);
+
+		/// <summary>
+		/// Create an Optional of different type based in this Optional object
+		/// </summary>
+		/// <typeparam name="TResult">Type of a result Optional</typeparam>
+		/// <param name="map">Map predicate</param>
+		/// <returns>A new Optional of <see cref="TResult"/> after map execution</returns>
+		public async Task<Optional<TResult>> MapAsync<TResult>(Func<T0, Task<TResult>> map) =>
+			Value is T0 value ? Optional<TResult>.Create(await map(value)) : Optional<TResult>.Create(Optional.Empty);
 
 		/// <summary>
 		/// Return inner value if is valid otherwise return default value

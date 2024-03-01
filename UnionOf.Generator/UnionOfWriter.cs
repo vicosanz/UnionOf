@@ -18,7 +18,14 @@
 				}
 			}
 
-			WriteLine("#nullable disable");
+			if (!union.AllowNulls)
+			{
+				WriteLine("#nullable disable");
+			}
+			else
+			{
+				WriteLine("#nullable enable");
+			}
 			WriteLine();
 
 			if (!string.IsNullOrEmpty(union.Namespace))
@@ -42,39 +49,38 @@
 
 		private void WriteInternalValue()
 		{
-			WriteLine("private readonly object _value;");
+			WriteLine($"private readonly object{Nullable(union)} _value;");
 			WriteLine("");
-			WriteBrace("public object Value", () =>
+			WriteBrace($"public object{Nullable(union)} Value", () =>
 			{
 				WriteLine("get => _value;");
-				WriteBrace("init", () =>
-				{
-					WriteLine("ArgumentNullException.ThrowIfNull(value);");
-					WriteBrace($"if (value is {string.Join(" || value is ", union.Types)})", () =>
-					{
-						WriteLine("_value = value;");
-					});
-					WriteBrace("else", () =>
-					{
-						WriteLine("throw new InvalidCastException(\"Type not allowed\");");
-					});
-				});
+				WriteLine($"init => _value = value ?? ParseNull();");
 			});
 		}
 
+		private static string Nullable(UnionOfMetadata union) => union.AllowNulls ? "?" : "";
+
 		private void WriteConstructor()
 		{
-			WriteLine($"public {union.Name}() => throw new InvalidCastException(\"Value must be specified\");");
+			WriteLine($"public {union.Name}() => Value = null;");
+
+			if (!union.AllowNulls)
+			{
+				WriteLine();
+				WriteLine("public object ParseNull() => throw new InvalidCastException(\"Type not allowed\");");
+				WriteLine();
+			}
 
 			foreach (var type in union.Types)
 			{
 				WriteLine();
 				WriteLine();
-				WriteLine($"public {union.Name}({type} value) => _value = value;");
+				WriteLine($"public {union.Name}({type}{Nullable(union)} value) => Value = value;");
 				WriteLine();
-				WriteLine($"public static {union.NameTyped} Create({type} value) => new(value);");
+				WriteLine($"public static {union.NameTyped} Create({type}{Nullable(union)} value) => new(value);");
 				WriteLine();
-				WriteLine($"public static implicit operator {union.NameTyped}({type} value) => Create(value);");
+				WriteLine($"public static implicit operator {union.NameTyped}({type}{Nullable(union)} value) => Create(value);");
+				WriteLine();
 				WriteLine();
 			}
 		}
@@ -86,19 +92,18 @@
 			WriteLine();
 			WriteBrace($"public bool Equals({union.NameTyped} other)", () =>
 			{
-				WriteLine($"if (ReferenceEquals(null, other)) return false;");
-				WriteLine($"return _value.GetType() == other.Value.GetType() && Equals(_value, other.Value);");
+				WriteLine("return _value is not null ? other.Value is not null && _value.Equals(other.Value) : other.Value is null;");
 			});
 			WriteLine();
-			WriteLine($"public override bool Equals(object obj) => ReferenceEquals(null, obj) ? false : obj is {union.NameTyped} o && Equals(o);");
+			WriteLine($"public override bool Equals(object{Nullable(union)} obj) => obj is not null && obj is {union.NameTyped} o && Equals(o);");
 			WriteLine();
-			WriteLine($"public override int GetHashCode() => _value.GetHashCode();");
+			WriteLine($"public override int GetHashCode() => {(union.AllowNulls ? "_value?.GetHashCode() ?? 0;" : "_value.GetHashCode();")}");
 		}
 
 		private void WriteToString()
 		{
 			// object.ToString()
-			WriteLine("public override string ToString() => _value.ToString()!;");
+			WriteLine($"public override string ToString() => {(union.AllowNulls ? "_value?.ToString() ?? \"\"" : "_value.ToString()")};");
 		}
 	}
 }

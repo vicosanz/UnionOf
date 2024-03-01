@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -10,14 +11,14 @@ namespace UnionOf.Generator
 	[Generator]
 	public class UnionOfGenerator : IIncrementalGenerator
 	{
-		private const string unionOfAttribute = "UnionOf.UnionOfAttribute";
+		private static readonly string iUnionOf = "IUnionOf<";
+		private static readonly string unionOfAttribute = "UnionOf.UnionOfAttribute";
+		private static readonly string iHandleDefaultValue = "IHandleDefaultValue";
+
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
 //#if DEBUG
-//			if (!Debugger.IsAttached)
-//			{
-//				Debugger.Launch();
-//			}
+//			if (!Debugger.IsAttached) Debugger.Launch();
 //#endif
 			IncrementalValuesProvider<TypeDeclarationSyntax> typeDeclarations = context.SyntaxProvider
 				.CreateSyntaxProvider(
@@ -27,16 +28,16 @@ namespace UnionOf.Generator
 
 			IncrementalValueProvider<(Compilation, ImmutableArray<TypeDeclarationSyntax>)> compilationAndEnums
 				= context.CompilationProvider.Combine(typeDeclarations.Collect());
-
+			
 			context.RegisterSourceOutput(compilationAndEnums,
 				static (spc, source) => Execute(source.Item1, source.Item2, spc));
 		}
 
 		private static void Execute(Compilation compilation, ImmutableArray<TypeDeclarationSyntax> type, SourceProductionContext context)
 		{
-			if (type.IsDefaultOrEmpty) return;
+			if (type.IsDefaultOrEmpty) return; 
 
-			var unionOfs = GetUnionOfs(compilation, type.Distinct(), context.CancellationToken);
+			var unionOfs = GetUnionOfs(compilation, type.Distinct(), context);
 
 			if (unionOfs.Any())
 			{
@@ -50,12 +51,12 @@ namespace UnionOf.Generator
 		}
 
 		protected static List<UnionOfMetadata> GetUnionOfs(Compilation compilation,
-			IEnumerable<TypeDeclarationSyntax> types, CancellationToken ct)
+			IEnumerable<TypeDeclarationSyntax> types, SourceProductionContext context)
 		{
 			var unionOfs = new List<UnionOfMetadata>();
 			foreach (var type in types)
 			{
-				ct.ThrowIfCancellationRequested();
+				context.CancellationToken.ThrowIfCancellationRequested();
 
 				SemanticModel semanticModel = compilation.GetSemanticModel(type.SyntaxTree);
 				if (semanticModel.GetDeclaredSymbol(type) is not INamedTypeSymbol typeSymbol)
@@ -65,38 +66,65 @@ namespace UnionOf.Generator
 				}
 
 				var typelist = new List<string>();
-				foreach (var attribute in typeSymbol.GetAttributes())
+				bool allowNulls = false;
+				string modifiers = type.GetModifiers();
+
+				if (!modifiers.Contains("partial"))
 				{
-					if (attribute.AttributeClass!.ToDisplayString().Equals(unionOfAttribute, StringComparison.OrdinalIgnoreCase))
+					context.ReportDiagnostic(
+						Diagnostic.Create(DiagnosticDescriptors.StructNotPartial, null, typeSymbol.ToString())
+					);
+					continue;
+				}
+
+				if (type.BaseList != null)
+				{
+					foreach (var baseType in type.BaseList!.Types)
 					{
-						if (attribute.ConstructorArguments.Any())
+						if (baseType.ToFullString().Contains(iUnionOf))
 						{
-							var argument = attribute.ConstructorArguments.First();
-							typelist.AddRange(argument.Values.ToList().ConvertAll(x => x.Value!.ToString()));
+							var argumentsType = (GenericNameSyntax)baseType.Type;
+							typelist.AddRange(argumentsType.TypeArgumentList.Arguments.ToList().ConvertAll(x => x.ToFullString()));
 						}
-						else
+						else if (baseType.ToFullString().Contains(iHandleDefaultValue))
 						{
-							foreach (var baseType in type.BaseList!.Types)
+							allowNulls = true;
+						}
+					}
+				}
+				if (!typelist.Any())
+				{
+					foreach (var attribute in typeSymbol.GetAttributes())
+					{
+						if (attribute.AttributeClass!.ToDisplayString().Equals(unionOfAttribute, StringComparison.OrdinalIgnoreCase))
+						{
+							if (attribute.ConstructorArguments.Any())
 							{
-								if (baseType.ToFullString().StartsWith("IUnionOf<", StringComparison.OrdinalIgnoreCase))
-								{
-									var argumentsType = (GenericNameSyntax)baseType.Type;
-									typelist.AddRange(argumentsType.TypeArgumentList.Arguments.ToList().ConvertAll(x => x.ToFullString()));
-								}
+								var argument = attribute.ConstructorArguments.First();
+								typelist.AddRange(argument.Values.ToList().ConvertAll(x => x.Value!.ToString()));
 							}
 						}
 					}
 				}
+				if (!typelist.Any())
+				{
+					context.ReportDiagnostic(
+						Diagnostic.Create(DiagnosticDescriptors.TypesNotDefined, null, typeSymbol.ToString())
+					);
+					continue;
+				}
 				unionOfs.Add(
 					new UnionOfMetadata(type.GetNamespace(),
 										type.GetUsings(),
+										allowNulls,
 										typeSymbol.Name,
 										typeSymbol.GetNameTyped(),
 										typeSymbol.ToString(),
-										type.GetModifiers(),
+										modifiers,
 										typelist));
 			}
 			return unionOfs;
 		}
+
 	}
 }

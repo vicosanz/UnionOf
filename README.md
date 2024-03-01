@@ -69,6 +69,20 @@ You can add logic to generated UnionOfs
     
 ```
 
+You can add define how to handle nulls defining a Default value if null is received
+
+```csharp
+    [UnionOf]
+    public readonly partial struct IntOrString : IUnionOf<int, string>, IHandleDefaultValue
+    {
+        public object ParseNull() => "none";
+    }
+    
+    ...
+    IntOrString value1 = new();
+    Console.WriteLine(value1); // output: none (default value)
+```
+
 
 You can use UnionOfs as Result type with signed types
 

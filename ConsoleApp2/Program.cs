@@ -7,9 +7,11 @@ Console.WriteLine("Hello, World!");
 
 
 Cat mycat = new();
+//Cat? nullcat = null;
 CatDog pet = new Dog();
 CatDog pet2 = mycat;
 CatDog pet3 = new Cat();
+//CatDog pet4 = nullcat;
 
 EvaluatePet(pet);
 //Console.WriteLine($"equal {pet.Equals(pet2)}");
@@ -22,7 +24,9 @@ EvaluatePet(pet);
 
 //Serialize(pet);
 
-//IntOrString value1 = 8;
+IntOrString value1 = new();
+Console.WriteLine(">>>IntOrString null handled");
+Console.WriteLine(value1);
 //IntOrString value2 = 9;
 //IntOrString value1a = "8";
 //IntOrString value2a = "9";
@@ -101,4 +105,22 @@ Console.WriteLine(fullname);
 string? empty = "x";
 var whentest = Optional.Of(empty).WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
 Console.WriteLine(whentest);
+
+Console.WriteLine(">>>optional");
+
+Optional<string> message;
+message = new();
+Console.WriteLine(message);
+message = "not empty";
+Console.WriteLine(message.Reduce("-"));
+string? nullstring = null;
+message = nullstring;
+Console.WriteLine(message.Reduce("-"));
+Console.WriteLine("<<<end optional");
+var optint = Optional.Parse<int>("9");
+Console.WriteLine(optint.Reduce(-1));
+var optint2 = Optional.Parse<int>("x9");
+Console.WriteLine(optint2.Reduce(-1));
+
+
 record Persona(string FirstName, Optional<string> LastName);

@@ -81,6 +81,8 @@
 				WriteLine();
 				WriteLine($"public static implicit operator {union.NameTyped}({type}{Nullable(union)} value) => Create(value);");
 				WriteLine();
+				WriteLine($"public static explicit operator {type}({union.NameTyped} source) => source.Value is {type} value ? value : throw new InvalidCastException();");
+				WriteLine();
 				WriteLine();
 			}
 		}

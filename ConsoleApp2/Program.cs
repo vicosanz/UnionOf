@@ -101,10 +101,12 @@ var fullname = persona.LastName
 
 Console.WriteLine(fullname);
 
-
-string? empty = "x";
+string? empty = "x"; 
 var whentest = Optional.Of(empty).WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
-Console.WriteLine(whentest);
+Console.WriteLine(whentest); 
+var whentest2 = empty.WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
+Console.WriteLine(whentest2);
+
 
 Console.WriteLine(">>>optional");
 
@@ -122,5 +124,10 @@ Console.WriteLine(optint.Reduce(-1));
 var optint2 = Optional.Parse<int>("x9");
 Console.WriteLine(optint2.Reduce(-1));
 
+int? intnullable = null;
+Optional<int> intoptional = 99;
 
+Console.WriteLine($"nullable {intnullable.GetValueOrDefault()}");
+Console.WriteLine($"nullable {(int)intoptional}");
+Console.WriteLine($"{Optional.GetUnderlyingType(intoptional.GetType())}");
 record Persona(string FirstName, Optional<string> LastName);

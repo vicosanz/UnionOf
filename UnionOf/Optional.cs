@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 
 namespace UnionOf
@@ -16,13 +17,16 @@ namespace UnionOf
 	[UnionOf]
 	public readonly partial struct Optional<T0> : IUnionOf<T0, Empty>, IOptional, IHandleDefaultValue 
 	{
+		public static readonly Optional<T0> Default = Empty.Default;
+		public object ParseNull() => Default;
+
 		/// <summary>
 		/// Evaluate a predicate and returns this Optional object or new Optional empty
 		/// </summary>
 		/// <param name="predicate">Predicate to evaluate</param>
 		/// <returns>if true return this object otherwise a new Optional empty</returns>
 		public Optional<T0> When(Func<T0, bool> predicate) =>
-			Value is T0 value && predicate(value) ? this : new(Empty.Default);
+			Value is T0 value && predicate(value) ? this : Default;
 
 		/// <summary>
 		/// Evaluate a negative predicate and returns this Optional object or new Optional empty
@@ -30,7 +34,7 @@ namespace UnionOf
 		/// <param name="predicate">Negative predicate to evaluate</param>
 		/// <returns>if false return this object otherwise a new Optional empty</returns>
 		public Optional<T0> WhenNot(Func<T0, bool> predicate) =>
-			Value is T0 value && !predicate(value) ? this : new(Empty.Default);
+			Value is T0 value && !predicate(value) ? this : Default;
 
 		/// <summary>
 		/// Create an Optional of different type based in this Optional object
@@ -39,7 +43,7 @@ namespace UnionOf
 		/// <param name="map">Map predicate</param>
 		/// <returns>A new Optional of <see cref="TResult"/> after map execution</returns>
 		public Optional<TResult> Map<TResult>(Func<T0, TResult> map) =>
-			Value is T0 value ? Optional<TResult>.Create(map(value)) : Optional<TResult>.Create(Empty.Default);
+			Value is T0 value ? new Optional<TResult>(map(value)) : new Optional<TResult>();
 
 		/// <summary>
 		/// Create an Optional of different type based in this Optional object
@@ -48,7 +52,7 @@ namespace UnionOf
 		/// <param name="map">Map predicate</param>
 		/// <returns>A new Optional of <see cref="TResult"/> after map execution</returns>
 		public async Task<Optional<TResult>> MapAsync<TResult>(Func<T0, Task<TResult>> map) =>
-			Value is T0 value ? Optional<TResult>.Create(await map(value)) : Optional<TResult>.Create(Empty.Default);
+			Value is T0 value ? new Optional<TResult>(await map(value)) : new Optional<TResult>();
 
 		/// <summary>
 		/// Return inner value if is valid otherwise return default value
@@ -63,8 +67,6 @@ namespace UnionOf
 		/// <param name="default">Value returned if inner value is Empty</param>
 		/// <returns>Inner value or default</returns>
 		public T0 Reduce(Func<T0> @default) => Value is T0 value ? value : @default();
-
-		public object ParseNull() => Empty.Default;
 	}
 
 	public readonly struct Empty : IEquatable<Empty>, IComparable<Empty>
@@ -97,7 +99,7 @@ namespace UnionOf
 
 	public static class Optional
 	{
-		public static Optional<T0> ToEmpty<T0>() => new(Empty.Default);
+		public static Optional<T0> ToEmpty<T0>() => Optional<T0>.Default;
 
 		/// <summary>
 		/// Create an Optional using a value
@@ -105,7 +107,7 @@ namespace UnionOf
 		/// <typeparam name="T0">Type of Optional result</typeparam>
 		/// <param name="value">Source value</param>
 		/// <returns>A new Optional object, if value is null returns Optional empty</returns>
-		public static Optional<T0> Of<T0>(T0 value) => value == null ? new(Empty.Default) : new(value);
+		public static Optional<T0> Of<T0>(T0 value) => value == null ? new Optional<T0>() : new(value);
 
 		public static Optional<T0> Of<T0, T1>(Optional<T1> value) 
 			=> value.Map((value) => (T0)Convert.ChangeType(value, typeof(T0)));
@@ -152,12 +154,30 @@ namespace UnionOf
 		private delegate bool TryParse<T>(string value, out T result);
 
 		private static Optional<T> Parse<T>(TryParse<T> tryParse, string value) =>
-			!tryParse(value, out T result) ? (Optional<T>)Empty.Default : Of(result);
+			!tryParse(value, out T result) ? new Optional<T>() : Of(result);
 
 		private delegate bool TryParseIgnoreCase<T>(string value, bool IgnoreCase, out T result);
 
 		private static Optional<T> ParseIgnoreCase<T>(TryParseIgnoreCase<T> tryParse, string value) =>
-			!tryParse(value, true, out T result) ? (Optional<T>)Empty.Default : Of(result);
+			!tryParse(value, true, out T result) ? new Optional<T>() : Of(result);
+
+		public static Type GetUnderlyingType(Type optionalType)
+		{
+			ArgumentNullException.ThrowIfNull(optionalType);
+			Contract.EndContractBlock();
+			Type result = null;
+			if (optionalType.IsGenericType && !optionalType.IsGenericTypeDefinition)
+			{
+				// instantiated generic type only                
+				Type genericType = optionalType.GetGenericTypeDefinition();
+				if (ReferenceEquals(genericType, typeof(Optional<>)))
+				{
+					result = optionalType.GetGenericArguments()[0];
+				}
+			}
+			return result;
+		}
+
 	}
 
 }

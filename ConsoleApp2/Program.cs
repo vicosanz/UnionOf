@@ -3,8 +3,27 @@ using System.Text.Json;
 using ConsoleApp2;
 using UnionOf;
 
+var exx = new InvalidDataException("error123");
+var jsonex = JsonSerializer.Serialize(exx);
+Console.WriteLine(jsonex);
+Exception exx2 = JsonSerializer.Deserialize<InvalidDataException>(jsonex);
+Console.WriteLine(JsonSerializer.Serialize(exx2));
 Console.WriteLine("Hello, World!");
 
+
+
+
+ErrOr<Cat> errOr = new Cat();
+var json = JsonSerializer.Serialize(errOr);
+Console.WriteLine(json);
+ErrOr<Cat> errOr2 = JsonSerializer.Deserialize<ErrOr<Cat>>(json);
+Console.WriteLine(JsonSerializer.Serialize(errOr2));
+
+errOr = new Exception("error123");
+json = JsonSerializer.Serialize(errOr);
+Console.WriteLine(json);
+errOr2 = JsonSerializer.Deserialize<ErrOr<Cat>>(json);
+Console.WriteLine(JsonSerializer.Serialize(errOr2));
 
 Cat mycat = new();
 //Cat? nullcat = null;
@@ -38,6 +57,10 @@ Console.WriteLine(value1);
 
 static void EvaluatePet(CatDog pet)
 {
+    if (pet.Is(out Dog dogx))
+    {
+        Console.WriteLine($"Pet is {dogx.Type}");
+    }
     var thisType = pet.Value switch
     {
         Cat cat => cat.Type,

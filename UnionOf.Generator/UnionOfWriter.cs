@@ -50,7 +50,7 @@
 		private void WriteInternalValue()
 		{
 			WriteLine($"private readonly object{Nullable(union)} _value;");
-			WriteLine("");
+			WriteLine("[System.Text.Json.Serialization.JsonIgnore]");
 			WriteBrace($"public object{Nullable(union)} Value", () =>
 			{
 				WriteLine("get => _value;");
@@ -62,12 +62,20 @@
 
 		private void WriteConstructor()
 		{
-			WriteLine($"public {union.Name}() => Value = null;");
-
 			if (!union.AllowNulls)
 			{
+				WriteLine("[Obsolete(\"Only for serializer\", true)]");
+                WriteLine($"public {union.Name}() {{ }}");
+            }
+			else
+			{
+                WriteLine($"public {union.Name}() => Value = null;");
+            }
+
+            if (!union.AllowNulls)
+			{
 				WriteLine();
-				WriteLine("public object ParseNull() => throw new InvalidCastException(\"Type not allowed\");");
+				WriteLine("public object ParseNull() => throw new InvalidCastException(\"Null not allowed\");");
 				WriteLine();
 			}
 
@@ -83,6 +91,16 @@
 				WriteLine();
 				WriteLine($"public static explicit operator {type}({union.NameTyped} source) => source.Value is {type} value ? value : throw new InvalidCastException();");
 				WriteLine();
+				WriteBrace($"public bool Is(out {type}{Nullable(union)} valueOut)", () =>
+				{
+					WriteBrace($"if (Value is {type} result)", () =>
+					{
+						WriteLine($"valueOut = result;");
+						WriteLine("return true;");
+					});
+                    WriteLine($"valueOut = default;");
+                    WriteLine("return false;");
+                });
 				WriteLine();
 			}
 		}

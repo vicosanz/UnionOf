@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using UnionOf;
 
@@ -49,9 +50,28 @@ namespace UnionOf
 			T0 valueT0 => await mapT0(valueT0),
 			_ => throw new InvalidCastException()
 		};
-
-		public T0 ValueT0 => Value is T0 value ? value : default;
-		public Exception Error => Value is Exception ex ? ex : default;
+        public T0 ValueT0
+        {
+            get => Value is T0 value ? value : default;
+            init
+            {
+                if (value != null)
+                {
+                    Value = value;
+                }
+            }
+        }
+        public Exception Error
+        {
+            get => Value is Exception ex ? ex : default;
+            init
+            {
+                if (value != null)
+                {
+                    Value = value;
+                }
+            }
+        }
 	}
 
 	/// <summary>

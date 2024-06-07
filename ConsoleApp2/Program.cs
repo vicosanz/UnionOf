@@ -6,7 +6,7 @@ using UnionOf;
 var exx = new InvalidDataException("error123");
 var jsonex = JsonSerializer.Serialize(exx);
 Console.WriteLine(jsonex);
-Exception exx2 = JsonSerializer.Deserialize<InvalidDataException>(jsonex);
+var exx2 = JsonSerializer.Deserialize<InvalidDataException>(jsonex);
 Console.WriteLine(JsonSerializer.Serialize(exx2));
 Console.WriteLine("Hello, World!");
 
@@ -27,6 +27,7 @@ Console.WriteLine(JsonSerializer.Serialize(errOr2));
 
 Cat mycat = new();
 //Cat? nullcat = null;
+
 CatDog pet = new Dog();
 CatDog pet2 = mycat;
 CatDog pet3 = new Cat();
@@ -97,9 +98,9 @@ if (resulterr.Value is Exception ex)
 {
     Console.WriteLine(ex.Message);
 }
-
+if (resulterr.Is(out Exception exxx)) Console.Write(exxx.Message);
 if (resulterr.IsFail(out Exception exception)) Console.WriteLine(exception.Message);
-if (resulterr.IsFail()) Console.WriteLine(resulterr.Error);
+if (resulterr.IsFail()) Console.WriteLine(resulterr.ValueException);
 
 Console.WriteLine(resultbool.ValueT0);
 Console.WriteLine(resulterr.ValueT0.ToString());

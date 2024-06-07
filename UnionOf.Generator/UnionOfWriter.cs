@@ -81,7 +81,16 @@
 
 			foreach (var type in union.Types)
 			{
-				WriteLine();
+                WriteLine();
+                WriteLine();
+                WriteBrace($"public {type}{Nullable(union)} Value{type.Replace(".", "_")}", () =>
+				{
+					WriteLine($"get => Value is {type} value ? value : default;");
+					WriteBrace($"init", () =>
+					{
+						WriteLine($"if (value != null) Value = value;");
+					});
+				});
 				WriteLine();
 				WriteLine($"public {union.Name}({type}{Nullable(union)} value) => Value = value;");
 				WriteLine();

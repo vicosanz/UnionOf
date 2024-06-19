@@ -2,5 +2,5 @@
 
 public interface IHandleDefaultValue
 {
-	object ParseNull();
+    object ParseNull();
 }

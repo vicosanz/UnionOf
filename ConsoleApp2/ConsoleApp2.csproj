@@ -8,6 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="ErrOrX.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\UnionOf.Common\UnionOf.Common.csproj" />
 		<ProjectReference Include="..\UnionOf.Generator\UnionOf.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\UnionOf\UnionOf.csproj" />

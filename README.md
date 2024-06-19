@@ -124,6 +124,36 @@ You can use UnionOfs as Result type with signed types
     }
 ```
 
+You can implement shortcircuit pattern with ErrOr values
+
+```csharp
+    var response = ErrOr.Of(request)
+        .Map(ValidateNonEmpty)
+        .Map(ToUpper)
+        .Bind(ToResponse)
+        .Match(
+            (response) => response.Result,
+            (exception) => exception.Message
+        );
+
+    private static ErrOr<Request> ValidateNonEmpty(Request request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            //short circuit
+            return new Exception("Name is empty");
+        }
+        return request;
+    }
+    private static ErrOr<Request> ToUpper(Request request) =>
+        request with
+        {
+            Name = request.Name.ToUpperInvariant()
+        };
+    private static ErrOr<Response> ToResponse(Request request) =>
+        new Response(request.Name);
+
+```
 
 You can include subtypes into struct as result types and specialized methods with additional parameters.
 
@@ -190,6 +220,43 @@ In order to discriminated values use c# match pattern
     }
 ```
 
+Also you can implement stages
+
+```csharp
+
+    [UnionOf]
+    public readonly partial struct Operation : IUnionOf<Operation.Initialized, Operation.Started, Operation.Completed, Operation.Failed>
+    {
+        public record Initialized(DateTime initDate);
+        public record Started(Initialized init, DateTime startDate, int param1);
+        public record Completed(Started started, string Result);
+        public record Failed(Started started, string Reason);
+
+        public string Log() => Value switch
+        {
+            Initialized init => $"Operation init at {init.initDate}",
+            Started started => $"Operation started, init {started.init.initDate}, started at {started.startDate}, with param {started.param1}",
+            Completed completed => $"Operation completed, init {completed.started.init.initDate}, started at {completed.started.startDate}, with param {completed.started.param1}, result = {completed.Result}",
+            Failed failed => $"Operation failed, init {failed.started.init.initDate}, started at {failed.started.startDate}, with param {failed.started.param1}, reason = {failed.Reason}",
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    ...
+
+    Operation operation1 = new Operation.Initialized(DateTime.Now);
+    Console.WriteLine(operation1.Log());
+    operation1 = new Operation.Started(operation1.ValueOperation_Initialized, DateTime.Now, -1212);
+    Console.WriteLine(operation1.Log());
+    operation1 = new Operation.Completed(operation1.ValueOperation_Started, "successful");
+    Console.WriteLine(operation1.Log());
+
+
+    //result
+    Operation init at 19/6/2024 12:37:26
+    Operation started, init 19/6/2024 12:37:26, started at 19/6/2024 12:37:26, with param -1212
+    Operation completed, init 19/6/2024 12:37:26, started at 19/6/2024 12:37:26, with param -1212, result = successful
+```
 
 You can also implement optional pattern
 

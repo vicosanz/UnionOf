@@ -1,6 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.Text.Json;
 using ConsoleApp2;
+using System.Text.Json;
 using UnionOf;
 
 var exx = new InvalidDataException("error123");
@@ -125,11 +125,11 @@ var fullname = persona.LastName
 
 Console.WriteLine(fullname);
 
-string? empty = "x"; 
+string? empty = "x";
 var whentest = Optional.Of(empty).WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
-Console.WriteLine(whentest); 
-var whentest2 = empty.WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
-Console.WriteLine(whentest2);
+Console.WriteLine(whentest);
+//var whentest2 = empty.WhenNot(string.IsNullOrWhiteSpace).Reduce("is empty");
+//Console.WriteLine(whentest2);
 
 
 Console.WriteLine(">>>optional");
@@ -154,4 +154,75 @@ Optional<int> intoptional = 99;
 Console.WriteLine($"nullable {intnullable.GetValueOrDefault()}");
 Console.WriteLine($"nullable {(int)intoptional}");
 Console.WriteLine($"{Optional.GetUnderlyingType(intoptional.GetType())}");
+
+
+Request request = new(Guid.NewGuid(), "Infoware");
+
+var response = ErrOr.Of(request)
+    .Map(ValidateNonEmpty)
+    .Map(ToUpper)
+    .Bind(ToResponse)
+    .Match(
+        (response) => response.Result,
+        (exception) => exception.Message
+    );
+
+Console.WriteLine(response);
+
+
+var response2 = await ErrOr.Of(request)
+    .MapAsync(ValidateNonEmptyAsync).Result
+    .Map(ToUpper)
+    .Bind(ToResponse)
+    .MatchAsync(
+        async (response) =>
+        {
+            await Task.Delay(1);
+            return response.Result;
+        },
+        async (exception) =>
+        {
+            await Task.Delay(1);
+            return exception.Message;
+        }
+    );
+
+Console.WriteLine(response2);
+
+
+Operation operation1 = new Operation.Initialized(DateTime.Now);
+Console.WriteLine(operation1.Log());
+operation1 = new Operation.Started(operation1.ValueOperation_Initialized, DateTime.Now, -1212);
+Console.WriteLine(operation1.Log());
+operation1 = new Operation.Completed(operation1.ValueOperation_Started, "successful");
+Console.WriteLine(operation1.Log());
+
+ErrOr<Request> ValidateNonEmpty(Request request)
+{
+    if (string.IsNullOrWhiteSpace(request.Name))
+    {
+        return new Exception("Name is empty");
+    }
+    return request;
+}
+
+async Task<ErrOr<Request>> ValidateNonEmptyAsync(Request request)
+{
+    await Task.Delay(1);
+    if (string.IsNullOrWhiteSpace(request.Name))
+    {
+        return new Exception("Name is empty");
+    }
+    return request;
+}
+
+ErrOr<Request> ToUpper(Request request) =>
+    request with
+    {
+        Name = request.Name.ToUpperInvariant()
+    };
+
+ErrOr<Response> ToResponse(Request request) =>
+    new Response(request.Name);
+
 record Persona(string FirstName, Optional<string> LastName);

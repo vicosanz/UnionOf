@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using static UnionOf.ErrOr;
 
 namespace UnionOf
 {
@@ -205,6 +206,24 @@ namespace UnionOf
         public static ErrOr<T2> Bind<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind) =>
             errOr.Is(out T1 value) ? bind(value) : errOr.ValueException;
 
+
+        public delegate ErrOr<TResponse> BindDefaultDelegate<TResponse>();
+        public static ErrOr<T2> BindOrDefault<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, BindDefaultDelegate<T2> @default)
+        {
+            if (errOr.Is(out T1 value))
+            {
+                try
+                {
+                    var result = bind(value);
+                    return result;
+                }
+                catch (Exception)
+                {
+                    return @default();
+                }
+            }
+            return errOr.ValueException;
+        }
 
         public delegate Task<ErrOr<TResponse>> BindDelegateAsync<TRequest, TResponse>(TRequest request);
         public static async Task<ErrOr<T2>> BindAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind) =>

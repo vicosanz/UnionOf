@@ -6,6 +6,7 @@ namespace TestProject1
     {
         Request request = new(Guid.NewGuid(), "Infoware");
         Request request2 = new(Guid.NewGuid(), "");
+        Request request3 = new(Guid.NewGuid(), null!);
 
 
         [Fact]
@@ -187,6 +188,15 @@ namespace TestProject1
                     }
                 );
             Assert.NotEqual("Infoware", result4);
+        }
+
+        [Fact]
+        public void BindOrDefault()
+        {
+            var result = ErrOr.Of(request3)
+                .BindOrDefault<Request, string>(x => x.Name, () => new Exception("null"));
+
+            Assert.IsType<Exception>(result.Value);
         }
 
         private async Task<ErrOr<string>> ToStringResponseAsync(Request request)

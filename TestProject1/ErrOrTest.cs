@@ -199,6 +199,15 @@ namespace TestProject1
             Assert.IsType<Exception>(result.Value);
         }
 
+        [Fact]
+        public void Tap()
+        {
+            var result = ErrOr.Of(request3)
+                .Tap(x=> Console.WriteLine(x.Name));
+
+            Assert.Equal(request3, result);
+        }
+
         private async Task<ErrOr<string>> ToStringResponseAsync(Request request)
         {
             await Task.Delay(1);

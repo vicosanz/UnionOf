@@ -190,17 +190,38 @@ namespace UnionOf
         /// <returns>A new ErrOr object with an exception wrapped</returns>
         public static ErrOr<T> Fail<T>(Exception error) => new(error);
 
-        
+
         public delegate ErrOr<T> MapDelegate<T>(T request);
 
-        public static ErrOr<T> Map<T>(this ErrOr<T> errOr, MapDelegate<T> bind) =>
-            errOr.Is(out T value) ? bind(value) : errOr;
+        public static ErrOr<T> Map<T>(this ErrOr<T> errOr, MapDelegate<T> map) =>
+            errOr.Is(out T value) ? map(value) : errOr;
 
 
         public delegate Task<ErrOr<T>> MapDelegateAsync<T>(T request);
-        public static async Task<ErrOr<T>> MapAsync<T>(this ErrOr<T> errOr, MapDelegateAsync<T> bind) =>
-            errOr.Is(out T value) ? await bind(value) : errOr;
+        public static async Task<ErrOr<T>> MapAsync<T>(this ErrOr<T> errOr, MapDelegateAsync<T> map) =>
+            errOr.Is(out T value) ? await map(value) : errOr;
 
+
+        public delegate void TapDelegate<T>(T request);
+
+        public static ErrOr<T> Tap<T>(this ErrOr<T> errOr, TapDelegate<T> tap)
+        {
+            if (errOr.Is(out T value))
+            {
+                tap(value);
+            }
+            return errOr;
+        }
+
+        public delegate Task TapDelegateAsync<T>(T request);
+        public static async Task<ErrOr<T>> TapAsync<T>(this ErrOr<T> errOr, TapDelegateAsync<T> map)
+        {
+            if (errOr.Is(out T value))
+            {
+                await map(value);
+            }
+            return errOr;
+        }
 
         public delegate ErrOr<TResponse> BindDelegate<TRequest, TResponse>(TRequest request);
         public static ErrOr<T2> Bind<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind) =>
@@ -208,7 +229,7 @@ namespace UnionOf
 
 
         public delegate ErrOr<TResponse> BindDefaultDelegate<TResponse>();
-        public static ErrOr<T2> BindOrDefault<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, BindDefaultDelegate<T2> @default)
+        public static ErrOr<T2> BindOrDefault<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, BindDefaultDelegate<T2> @default = null)
         {
             if (errOr.Is(out T1 value))
             {
@@ -217,8 +238,10 @@ namespace UnionOf
                     var result = bind(value);
                     return result;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    if (@default == null)
+                        return ex;
                     return @default();
                 }
             }
@@ -228,6 +251,47 @@ namespace UnionOf
         public delegate Task<ErrOr<TResponse>> BindDelegateAsync<TRequest, TResponse>(TRequest request);
         public static async Task<ErrOr<T2>> BindAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind) =>
             errOr.Is(out T1 value) ? await bind(value) : errOr.ValueException;
+
+
+        public delegate Task<ErrOr<TResponse>> BindDefaultDelegateAsync<TResponse>();
+        public static async Task<ErrOr<T2>> BindOrDefaultAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, BindDefaultDelegateAsync<T2> @default)
+        {
+            if (errOr.Is(out T1 value))
+            {
+                try
+                {
+                    var result = await bind(value);
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    if (@default == null)
+                        return ex;
+                    return await @default();
+                }
+            }
+            return errOr.ValueException;
+        }
+
+
+        public static async Task<ErrOr<T2>> BindOrDefaultAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, BindDefaultDelegate<T2> @default)
+        {
+            if (errOr.Is(out T1 value))
+            {
+                try
+                {
+                    var result = await bind(value);
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    if (@default == null)
+                        return ex;
+                    return @default();
+                }
+            }
+            return errOr.ValueException;
+        }
 
 
         public delegate TResult MatchValid<T0, TResult>(T0 value);

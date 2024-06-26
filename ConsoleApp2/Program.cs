@@ -170,21 +170,28 @@ var response = ErrOr.Of(request)
 Console.WriteLine(response);
 
 
+int seconds = 1*1000;
+await Task.Delay(seconds);
+
 var response2 = await ErrOr.Of(request)
-    .MapAsync(ValidateNonEmptyAsync).Result
-    .Map(ToUpper)
-    .Bind(ToResponse)
+    .MapAsync(ValidateNonEmptyAsync)
+    .MapAsync(ToUpper)
+    .MapAsync(ValidateNonEmptyAsync)
+    .BindAsync(ToResponse)
+    .BindAsync<Response, Response>(x => x)
+    .MapAsync(x =>
+    {
+        seconds = 1*1000;
+        return x;
+    })
     .MatchAsync(
         async (response) =>
         {
-            await Task.Delay(1);
+            await Task.Delay(seconds);
             return response.Result;
         },
-        async (exception) =>
-        {
-            await Task.Delay(1);
-            return exception.Message;
-        }
+        (exception) => exception.Message
+        
     );
 
 Console.WriteLine(response2);

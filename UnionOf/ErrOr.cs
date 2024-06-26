@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using static UnionOf.ErrOr;
 
 namespace UnionOf
 {
@@ -191,107 +190,161 @@ namespace UnionOf
         public static ErrOr<T> Fail<T>(Exception error) => new(error);
 
 
-        public delegate ErrOr<T> MapDelegate<T>(T request);
+
+
+        public delegate ErrOr<T1> MapDelegate<T1>(T1 request);
 
         public static ErrOr<T> Map<T>(this ErrOr<T> errOr, MapDelegate<T> map) =>
             errOr.Is(out T value) ? map(value) : errOr;
 
+        public static async Task<ErrOr<T>> MapAsync<T>(this Task<ErrOr<T>> errOr, MapDelegate<T> map) =>
+            (await errOr).Map(map);
 
         public delegate Task<ErrOr<T>> MapDelegateAsync<T>(T request);
         public static async Task<ErrOr<T>> MapAsync<T>(this ErrOr<T> errOr, MapDelegateAsync<T> map) =>
             errOr.Is(out T value) ? await map(value) : errOr;
+
+        public static async Task<ErrOr<T>> MapAsync<T>(this Task<ErrOr<T>> errOr, MapDelegateAsync<T> map) =>
+            await (await errOr).MapAsync(map);
+
+
+
 
 
         public delegate void TapDelegate<T>(T request);
 
         public static ErrOr<T> Tap<T>(this ErrOr<T> errOr, TapDelegate<T> tap)
         {
-            if (errOr.Is(out T value))
-            {
-                tap(value);
-            }
+            if (errOr.Is(out T value)) tap(value);
             return errOr;
         }
 
+        public static async Task<ErrOr<T>> TapAsync<T>(this Task<ErrOr<T>> errOr, TapDelegate<T> tap) =>
+            (await errOr).Tap(tap);
+
         public delegate Task TapDelegateAsync<T>(T request);
-        public static async Task<ErrOr<T>> TapAsync<T>(this ErrOr<T> errOr, TapDelegateAsync<T> map)
+        public static async Task<ErrOr<T>> TapAsync<T>(this ErrOr<T> errOr, TapDelegateAsync<T> tap)
         {
-            if (errOr.Is(out T value))
-            {
-                await map(value);
-            }
+            if (errOr.Is(out T value)) await tap(value);
             return errOr;
         }
+
+        public static async Task<ErrOr<T>> TapAsync<T>(this Task<ErrOr<T>> errOr, TapDelegateAsync<T> tap) =>
+            await (await errOr).TapAsync(tap);
+
+
+
+
 
         public delegate ErrOr<TResponse> BindDelegate<TRequest, TResponse>(TRequest request);
         public static ErrOr<T2> Bind<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind) =>
             errOr.Is(out T1 value) ? bind(value) : errOr.ValueException;
 
+        public static async Task<ErrOr<T2>> BindAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegate<T1, T2> bind) =>
+            (await errOr).Bind(bind);
 
-        public delegate ErrOr<TResponse> BindDefaultDelegate<TResponse>();
-        public static ErrOr<T2> BindOrDefault<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, BindDefaultDelegate<T2> @default = null)
-        {
-            if (errOr.Is(out T1 value))
-            {
-                try
-                {
-                    var result = bind(value);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    if (@default == null)
-                        return ex;
-                    return @default();
-                }
-            }
-            return errOr.ValueException;
-        }
+
 
         public delegate Task<ErrOr<TResponse>> BindDelegateAsync<TRequest, TResponse>(TRequest request);
         public static async Task<ErrOr<T2>> BindAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind) =>
             errOr.Is(out T1 value) ? await bind(value) : errOr.ValueException;
 
+        public static async Task<ErrOr<T2>> BindAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegateAsync<T1, T2> bind) =>
+            await (await errOr).BindAsync(bind);
 
-        public delegate Task<ErrOr<TResponse>> BindDefaultDelegateAsync<TResponse>();
-        public static async Task<ErrOr<T2>> BindOrDefaultAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, BindDefaultDelegateAsync<T2> @default)
+
+
+
+
+
+        public delegate ErrOr<TResponse> TryBindDelegate<TResponse>();
+        public static ErrOr<T2> TryBind<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, TryBindDelegate<T2> @default = null)
         {
-            if (errOr.Is(out T1 value))
+            try
             {
-                try
-                {
-                    var result = await bind(value);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    if (@default == null)
-                        return ex;
-                    return await @default();
-                }
+                return errOr.Bind(bind);
             }
-            return errOr.ValueException;
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return @default();
+            }
+        }
+
+        public static async Task<ErrOr<T2>> TryBindAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegate<T1, T2> bind, TryBindDelegate<T2> @default = null) =>
+            (await errOr).TryBind(bind, @default);
+
+        public static async Task<ErrOr<T2>> TryBindAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegateAsync<T1, T2> bind, TryBindDelegate<T2> @default = null)
+        {
+            try
+            {
+                return await (await errOr).BindAsync(bind);
+            }
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return @default();
+            }
         }
 
 
-        public static async Task<ErrOr<T2>> BindOrDefaultAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, BindDefaultDelegate<T2> @default)
+
+        public delegate Task<ErrOr<TResponse>> TryBindDelegateAsync<TResponse>();
+        public static async Task<ErrOr<T2>> TryBindAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, TryBindDelegate<T2> @default = null)
         {
-            if (errOr.Is(out T1 value))
+            try
             {
-                try
-                {
-                    var result = await bind(value);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    if (@default == null)
-                        return ex;
-                    return @default();
-                }
+                return await errOr.BindAsync(bind);
             }
-            return errOr.ValueException;
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return @default();
+            }
         }
+        public static async Task<ErrOr<T2>> TryBindDefaultAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegate<T1, T2> bind, TryBindDelegateAsync<T2> @default = null)
+        {
+            try
+            {
+                return errOr.Bind(bind);
+            }
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return await @default();
+            }
+        }
+        public static async Task<ErrOr<T2>> TryBindAllAsync<T1, T2>(this ErrOr<T1> errOr, BindDelegateAsync<T1, T2> bind, TryBindDelegateAsync<T2> @default = null)
+        {
+            try
+            {
+                return await errOr.BindAsync(bind);
+            }
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return await @default();
+            }
+        }
+
+        public static async Task<ErrOr<T2>> TryBindAllAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegateAsync<T1, T2> bind, TryBindDelegateAsync<T2> @default = null) =>
+            await (await errOr).TryBindAllAsync(bind, @default);
+
+        public static async Task<ErrOr<T2>> TryBindDefaultAsync<T1, T2>(this Task<ErrOr<T1>> errOr, BindDelegate<T1, T2> bind, TryBindDelegateAsync<T2> @default = null)
+        {
+            try
+            {
+                return (await errOr).Bind(bind);
+            }
+            catch (Exception ex)
+            {
+                if (@default == null) return ex;
+                return await @default();
+            }
+        }
+
+
+
 
 
         public delegate TResult MatchValid<T0, TResult>(T0 value);
@@ -314,6 +367,12 @@ namespace UnionOf
                 _ => throw new InvalidCastException()
             };
 
+        public static async Task<TResult> MatchAsync<T0, TResult>(this Task<ErrOr<T0>> errOr,
+            MatchValid<T0, TResult> mapT0, MatchInvalid<TResult> mapError) => 
+            (await errOr).Match(mapT0, mapError);
+
+
+
         public delegate Task<TResult> MatchValidTask<T0, TResult>(T0 value);
         public delegate Task<TResult> MatchInvalidTask<TResult>(Exception value);
 
@@ -325,7 +384,7 @@ namespace UnionOf
         /// <param name="mapError"></param>
         /// <returns></returns>
         /// <exception cref="InvalidCastException"></exception>
-        public static async Task<TResult> MatchAsync<T0, TResult>(this ErrOr<T0> errOr, 
+        public static async Task<TResult> MatchAllAsync<T0, TResult>(this ErrOr<T0> errOr,
             MatchValidTask<T0, TResult> mapT0, MatchInvalidTask<TResult> mapError) =>
             errOr.Value switch
             {
@@ -333,6 +392,12 @@ namespace UnionOf
                 T0 valueT0 => await mapT0(valueT0),
                 _ => throw new InvalidCastException()
             };
+
+        public static async Task<TResult> MatchAllAsync<T0, TResult>(this Task<ErrOr<T0>> errOr,
+            MatchValidTask<T0, TResult> mapT0, MatchInvalidTask<TResult> mapError) =>
+            await (await errOr).MatchAllAsync(mapT0, mapError);
+
+
 
         /// <summary>
         /// Get Inner type using a predicate
@@ -342,7 +407,7 @@ namespace UnionOf
         /// <param name="mapError"></param>
         /// <returns></returns>
         /// <exception cref="InvalidCastException"></exception>
-        public static async Task<TResult> MatchAsync<T0, TResult>(this ErrOr<T0> errOr, 
+        public static async Task<TResult> MatchAsync<T0, TResult>(this ErrOr<T0> errOr,
             MatchValidTask<T0, TResult> mapT0, MatchInvalid<TResult> mapError) =>
             errOr.Value switch
             {
@@ -350,6 +415,10 @@ namespace UnionOf
                 T0 valueT0 => await mapT0(valueT0),
                 _ => throw new InvalidCastException()
             };
+
+        public static async Task<TResult> MatchAsync<T0, TResult>(this Task<ErrOr<T0>> errOr,
+            MatchValidTask<T0, TResult> mapT0, MatchInvalid<TResult> mapError) =>
+            await (await errOr).MatchAsync(mapT0, mapError);
 
         /// <summary>
         /// Get Inner type using a predicate
@@ -367,5 +436,14 @@ namespace UnionOf
                 T0 valueT0 => mapT0(valueT0),
                 _ => throw new InvalidCastException()
             };
+
+        public static async Task<TResult> MatchAsync<T0, TResult>(this Task<ErrOr<T0>> errOr,
+            MatchValid<T0, TResult> mapT0, MatchInvalidTask<TResult> mapError) =>
+            await (await errOr).MatchAsync(mapT0, mapError);
+
+
+
+        public static Task<ErrOr<T0>> TaskFromResult<T0>(this ErrOr<T0> errOr) => Task.FromResult(errOr);
+        public static ValueTask<ErrOr<T0>> ValueTaskFromResult<T0>(this ErrOr<T0> errOr) => ValueTask.FromResult(errOr);
     }
 }

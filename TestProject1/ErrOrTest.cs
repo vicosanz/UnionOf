@@ -87,6 +87,27 @@ namespace TestProject1
             Assert.NotEqual(request2, result2);
             Assert.True(result2.IsFail());
         }
+
+        [Fact]
+        public async Task TestDoubleMapAsync()
+        {
+            var result = await ErrOr.Of(request)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MapAsync(ValidateNonEmpty);
+            Assert.Equal(request, result);
+            Assert.False(result.IsFail());
+
+            var result2 = await ErrOr.Of(request2)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MapAsync(ValidateNonEmpty);
+            Assert.Equal(request, result);
+            Assert.False(result.IsFail());
+
+            Assert.NotEqual(request2, result2);
+            Assert.True(result2.IsFail());
+        }
         [Fact]
         public async Task TestMapAsync2Async()
         {
@@ -136,9 +157,21 @@ namespace TestProject1
         {
             var result = await ErrOr.Of(request)
                 .Map(ValidateNonEmpty)
-                .BindAsync(ToStringResponseAsync);
+                .BindAsync(ToStringResponseAsync)
+                .BindAsync<string, string>(x => x + "1")
+                .BindAsync<string, string>(x => x + "2")
+                .BindAsync<string, string>(async x =>
+                {
+                    await Task.Delay(0);
+                    return x + "3";
+                })
+                .BindAsync<string, string>(async x =>
+                 {
+                     await Task.Delay(0);
+                     return x + "4";
+                 });
             Assert.True(result.IsValid());
-            Assert.Equal("Infoware", result);
+            Assert.Equal("Infoware1234", result);
 
             var result2 = ErrOr.Of(request2)
                 .Map(ValidateNonEmpty)
@@ -188,22 +221,162 @@ namespace TestProject1
                     }
                 );
             Assert.NotEqual("Infoware", result4);
+
+            var result4a = await ErrOr.Of(request2)
+                .Map(ValidateNonEmpty)
+                .MatchAllAsync(
+                    async valid =>
+                    {
+                        await Task.Delay(1);
+                        return valid.Name;
+                    },
+                    async error =>
+                    {
+                        await Task.Delay(1);
+                        return error.Message;
+                    }
+                );
+            Assert.NotEqual("Infoware", result4a);
+
+            var result5 = await ErrOr.Of(request)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MatchAsync(
+                    async valid =>
+                    {
+                        await Task.Delay(1);
+                        return valid.Name;
+                    },
+                    error => error.Message
+                );
+            Assert.Equal("Infoware", result5);
+
+            var result6 = await ErrOr.Of(request2)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MatchAsync(
+                    valid => valid.Name,
+                    async error =>
+                    {
+                        await Task.Delay(1);
+                        return error.Message;
+                    }
+                );
+            Assert.NotEqual("Infoware", result6);
+
+            var result6a = await ErrOr.Of(request2)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MatchAllAsync(
+                    async valid =>
+                    {
+                        await Task.Delay(1);
+                        return valid.Name;
+                    },
+                    async error =>
+                    {
+                        await Task.Delay(1);
+                        return error.Message;
+                    }
+                );
+            Assert.NotEqual("Infoware", result6a);
+
+            var result7 = await ErrOr.Of(request2)
+                .MapAsync(ValidateNonEmptyAsync)
+                .MatchAsync(
+                    valid => valid.Name,
+                    error => error.Message
+                );
+            Assert.NotEqual("Infoware", result7);
         }
 
         [Fact]
-        public void BindOrDefault()
+        public void TryBind()
         {
             var result = ErrOr.Of(request3)
-                .BindOrDefault<Request, string>(x => x.Name, () => new Exception("null"));
+                .TryBind<Request, string>(x => x.Name, () => new Exception("null"))
+                .TryBind<string, string>(x => x, () => new Exception("null"));
 
             Assert.IsType<Exception>(result.Value);
+        }
+
+
+        [Fact]
+        public async Task TryBindAsync()
+        {
+            var result = await ErrOr.Of(request3)
+                .TryBindAsync<Request, string>(
+                    async (x) =>{
+                        await Task.Delay(0);
+                        return x.Name;
+                    }, () => new Exception("null"))
+                .TryBindDefaultAsync<string, string>(
+                    x => x,
+                    async () =>
+                    {
+                        await Task.Delay(0);
+                        return new Exception("null");
+                    })
+                .TryBindAllAsync<string, string>(
+                    async (x) => {
+                        await Task.Delay(0);
+                        return x;
+                    },
+                    async () =>
+                    {
+                        await Task.Delay(0);
+                        return new Exception("null");
+                    })
+                .TryBindAsync<string, string>(x => x, () => new Exception("null"));
+
+            Assert.IsType<Exception>(result.Value);
+
+            var result2 = await ErrOr.Of(request3)
+                .TryBindDefaultAsync<Request, string>(
+                    x => x.Name,
+                    async () =>
+                    {
+                        await Task.Delay(0);
+                        return new Exception("null");
+                    });
+            Assert.IsType<Exception>(result2.Value);
+
+            var result3 = await ErrOr.Of(request3)
+                .TryBindAllAsync<Request, string>(
+                    async (x) => {
+                        await Task.Delay(0);
+                        return x.Name;
+                    },
+                    async () =>
+                    {
+                        await Task.Delay(0);
+                        return new Exception("null");
+                    });
+            Assert.IsType<Exception>(result3.Value);
         }
 
         [Fact]
         public void Tap()
         {
             var result = ErrOr.Of(request3)
-                .Tap(x=> Console.WriteLine(x.Name));
+                .Tap(x => Console.WriteLine(x.Name))
+                .Tap(x => Console.WriteLine(x.Name));
+
+            Assert.Equal(request3, result);
+        }
+
+        [Fact]
+        public async Task TapAsync()
+        {
+            var result = await ErrOr.Of(request3)
+                .TapAsync(async x =>
+                {
+                    await Task.Delay(0);
+                    Console.WriteLine(x.Name);
+                })
+                .TapAsync(async x =>
+                {
+                    await Task.Delay(0);
+                    Console.WriteLine(x.Name);
+                })
+                .TapAsync(x => Console.WriteLine(x.Name));
 
             Assert.Equal(request3, result);
         }
